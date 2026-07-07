@@ -101,10 +101,18 @@ data = cache["stats"]
 
 stats_data = data.get("statistical_tests", data.get("stats", data))
 
+def _unwrap(d):
+    if isinstance(d, dict) and len(d) == 1:
+        k = next(iter(d))
+        v = d[k]
+        if isinstance(v, dict) and ("statistic" in v or "p_value" in v):
+            return v
+    return d
+
 # ── Section 1: Shapiro-Wilk ────────────────────────────────────
 st.header(tr("shapiro"))
 st.caption(tr("shapiro_desc"))
-shapiro = stats_data.get("shapiro", stats_data.get("shapiro_wilk", stats_data.get("shapiro_test", {})))
+shapiro = _unwrap(stats_data.get("shapiro", stats_data.get("shapiro_wilk", stats_data.get("shapiro_test", {}))))
 if shapiro:
     stat_s = shapiro.get("statistic", shapiro.get("stat", shapiro.get("w", "N/A")))
     pval_s = shapiro.get("p_value", shapiro.get("pvalue", shapiro.get("p", "N/A")))
@@ -123,7 +131,7 @@ else:
 # ── Section 2: Durbin-Watson ────────────────────────────────────
 st.header(tr("durbin_watson"))
 st.caption(tr("dw_desc"))
-dw = stats_data.get("durbin_watson", stats_data.get("dw", stats_data.get("durbin_watson_test", {})))
+dw = _unwrap(stats_data.get("durbin_watson", stats_data.get("dw", stats_data.get("durbin_watson_test", {}))))
 if dw:
     dw_stat = dw.get("statistic", dw.get("stat", dw.get("dw", "N/A")))
     dw_val = dw_stat if isinstance(dw_stat, (int, float)) else 0
@@ -148,7 +156,7 @@ else:
 # ── Section 3: Breusch-Pagan ────────────────────────────────────
 st.header(tr("breusch_pagan"))
 st.caption(tr("bp_desc"))
-bp = stats_data.get("breusch_pagan", stats_data.get("bp", stats_data.get("breusch_pagan_test", {})))
+bp = _unwrap(stats_data.get("breusch_pagan", stats_data.get("bp", stats_data.get("breusch_pagan_test", {}))))
 if bp:
     bp_stat = bp.get("statistic", bp.get("stat", bp.get("lm", "N/A")))
     bp_pval = bp.get("p_value", bp.get("pvalue", bp.get("p", "N/A")))
