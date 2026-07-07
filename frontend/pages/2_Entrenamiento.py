@@ -119,18 +119,21 @@ if retrain_clicked:
 
 st.markdown("---")
 
-# Load data: try trained results first, then API
+# Load data: try trained results first, then API (cached)
 trained = st.session_state.get("trained_results")
 if trained:
     models = trained
 else:
-    try:
-        with st.spinner("Cargando métricas precargadas..."):
-            data = api_client.get_training_metrics()
-        models = data.get("metrics", data.get("models", data.get("results", [])))
-    except Exception:
-        st.error(f"{tr('loading_error')}")
-        st.stop()
+    cache = st.session_state.api_metrics_cache
+    if "training" not in cache:
+        try:
+            with st.spinner("Cargando métricas precargadas..."):
+                cache["training"] = api_client.get_training_metrics()
+        except Exception:
+            st.error(f"{tr('loading_error')}")
+            st.stop()
+    data = cache["training"]
+    models = data.get("metrics", data.get("models", data.get("results", [])))
 
 # ── Section 1: Comparison Table ────────────────────────────────
 st.header(tr("comparison_table"))

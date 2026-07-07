@@ -3,15 +3,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import time
 import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import (
-    mean_squared_error, mean_absolute_error, r2_score,
-    confusion_matrix, roc_curve, roc_auc_score,
-)
 
 MODEL_NAMES = [
     "MLP Baseline",
@@ -22,6 +13,9 @@ MODEL_NAMES = [
 ]
 
 def _build_model(name, input_dim):
+    import tensorflow as tf
+    from tensorflow import keras
+    from tensorflow.keras import layers
     if name == "MLP Baseline":
         i = keras.Input(shape=(input_dim,))
         x = layers.Dense(64, activation="relu")(i)
@@ -86,6 +80,14 @@ def _build_model(name, input_dim):
     return model
 
 def train_on_data(X, y, progress_callback=None, status_callback=None):
+    import tensorflow as tf
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.metrics import (
+        mean_squared_error, mean_absolute_error, r2_score,
+        confusion_matrix, roc_curve, roc_auc_score,
+    )
+
     X = np.asarray(X, dtype=np.float32)
     y = np.asarray(y, dtype=np.float32).ravel()
 

@@ -34,6 +34,8 @@ if "predictions_store" not in st.session_state:
     st.session_state.predictions_store = None
 if "y_test_data" not in st.session_state:
     st.session_state.y_test_data = None
+if "api_metrics_cache" not in st.session_state:
+    st.session_state.api_metrics_cache = {}
 
 # Translation dictionary
 LANG = {
