@@ -96,10 +96,12 @@ except Exception as e:
     st.error(f"{tr('loading_error')}: {e}")
     st.stop()
 
+stats_data = data.get("statistical_tests", data.get("stats", data))
+
 # ── Section 1: Shapiro-Wilk ────────────────────────────────────
 st.header(tr("shapiro"))
 st.caption(tr("shapiro_desc"))
-shapiro = data.get("shapiro", data.get("shapiro_wilk", data.get("shapiro_test", {})))
+shapiro = stats_data.get("shapiro", stats_data.get("shapiro_wilk", stats_data.get("shapiro_test", {})))
 if shapiro:
     stat_s = shapiro.get("statistic", shapiro.get("stat", shapiro.get("w", "N/A")))
     pval_s = shapiro.get("p_value", shapiro.get("pvalue", shapiro.get("p", "N/A")))
@@ -118,7 +120,7 @@ else:
 # ── Section 2: Durbin-Watson ────────────────────────────────────
 st.header(tr("durbin_watson"))
 st.caption(tr("dw_desc"))
-dw = data.get("durbin_watson", data.get("dw", data.get("durbin_watson_test", {})))
+dw = stats_data.get("durbin_watson", stats_data.get("dw", stats_data.get("durbin_watson_test", {})))
 if dw:
     dw_stat = dw.get("statistic", dw.get("stat", dw.get("dw", "N/A")))
     dw_val = dw_stat if isinstance(dw_stat, (int, float)) else 0
@@ -143,7 +145,7 @@ else:
 # ── Section 3: Breusch-Pagan ────────────────────────────────────
 st.header(tr("breusch_pagan"))
 st.caption(tr("bp_desc"))
-bp = data.get("breusch_pagan", data.get("bp", data.get("breusch_pagan_test", {})))
+bp = stats_data.get("breusch_pagan", stats_data.get("bp", stats_data.get("breusch_pagan_test", {})))
 if bp:
     bp_stat = bp.get("statistic", bp.get("stat", bp.get("lm", "N/A")))
     bp_pval = bp.get("p_value", bp.get("pvalue", bp.get("p", "N/A")))
@@ -162,7 +164,7 @@ else:
 # ── Section 4: Friedman Test ────────────────────────────────────
 st.header(tr("friedman"))
 st.caption(tr("friedman_desc"))
-friedman = data.get("friedman", data.get("friedman_test", {}))
+friedman = stats_data.get("friedman", stats_data.get("friedman_test", {}))
 if friedman:
     f_stat = friedman.get("statistic", friedman.get("stat", "N/A"))
     f_pval = friedman.get("p_value", friedman.get("pvalue", friedman.get("p", "N/A")))
@@ -180,7 +182,7 @@ else:
 
 # ── Section 5: Pairwise Comparisons ────────────────────────────
 st.header(tr("pairwise"))
-pairwise = data.get("pairwise", data.get("pairwise_comparisons", data.get("posthoc", [])))
+pairwise = stats_data.get("pairwise", stats_data.get("pairwise_comparisons", stats_data.get("posthoc", [])))
 if pairwise:
     if isinstance(pairwise, list):
         df_pair = pd.DataFrame(pairwise)
@@ -200,7 +202,7 @@ if pairwise:
             st.plotly_chart(fig_heat_pair, use_container_width=True)
 else:
     # Try combined tests table
-    tests_table = data.get("tests", data.get("all_tests", []))
+    tests_table = stats_data.get("tests", stats_data.get("all_tests", []))
     if tests_table:
         df_tests = pd.DataFrame(tests_table)
         st.dataframe(df_tests, use_container_width=True)

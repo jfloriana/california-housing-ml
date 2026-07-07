@@ -70,6 +70,13 @@ st.title(tr("title"))
 st.markdown(f"*{tr('subtitle')}*")
 st.markdown("---")
 
+st.markdown("""
+<style>
+    .stDataFrame { overflow-x: auto; max-width: 100%; }
+    .stDataFrame table { font-size: 12px; }
+</style>
+""", unsafe_allow_html=True)
+
 report_lang = st.radio(
     tr("select_language"),
     options=["es", "en"],
@@ -146,16 +153,18 @@ with col1:
                     story.append(Paragraph(section_name.upper(), styles["Heading2"]))
                     story.append(Spacer(1, 8))
                     table_data = [df.columns.tolist()] + df.astype(str).values.tolist()
-                    t = Table(table_data, repeatRows=1)
+                    col_w = (letter[0] - 72) / max(len(df.columns), 1)
+                    t = Table(table_data, repeatRows=1, colWidths=[col_w] * len(df.columns))
                     t.setStyle(TableStyle([
                         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#667eea")),
                         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                        ("FONTSIZE", (0, 0), (-1, -1), 8),
+                        ("FONTSIZE", (0, 0), (-1, -1), 7),
                         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
                         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                     ]))
                     story.append(t)
-                    story.append(Spacer(1, 16))
+                    story.append(Spacer(1, 12))
 
             doc.build(story)
             buf.seek(0)

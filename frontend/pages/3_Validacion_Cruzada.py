@@ -71,9 +71,25 @@ except Exception as e:
     st.error(f"{tr('loading_error')}: {e}")
     st.stop()
 
+# ── Parse API data ──────────────────────────────────────────────
+cv_raw = data.get("cross_validation", data.get("cv", data.get("folds", data.get("results", data.get("cv_results", [])))))
+folds = []
+config = {"n_folds": 5, "scoring": "R²", "shuffle": True, "random_state": 42}
+
+if isinstance(cv_raw, list):
+    for entry in cv_raw:
+        if isinstance(entry, dict):
+            n_f = entry.get("n_folds", len(entry.get("fold_scores", [])))
+            scores = entry.get("fold_scores", [])
+            for i, s in enumerate(scores):
+                folds.append({"fold": i + 1, "score": s})
+            config = {"n_folds": n_f, "scoring": "R²", "shuffle": True, "random_state": 42}
+elif isinstance(cv_raw, dict):
+    folds = cv_raw.get("results", cv_raw.get("folds", []))
+    config = cv_raw.get("config", data.get("config", config))
+
 # ── Section 1: Configuration ────────────────────────────────────
 st.header(tr("config"))
-config = data.get("config", data.get("configuration", {}))
 c1, c2, c3, c4 = st.columns(4)
 with c1:
     st.metric(tr("folds"), config.get("n_folds") or config.get("folds", "N/A"))
@@ -86,7 +102,6 @@ with c4:
 
 # ── Section 2: Per-Fold Results ─────────────────────────────────
 st.header(tr("fold_results"))
-folds = data.get("folds", data.get("results", data.get("cv_results", [])))
 if folds:
     df_folds = pd.DataFrame(folds)
     fold_mse = next((c for c in ["MSE", "mse", "test_mse", "test_MSE"] if c in df_folds.columns), tr("mse"))

@@ -62,9 +62,17 @@ except Exception as e:
     st.error(f"{tr('loading_error')}: {e}")
     st.stop()
 
+tuning_raw = data.get("hyperparameter_tuning", data.get("tuning", data.get("results", data.get("trials", []))))
+if isinstance(tuning_raw, list):
+    tuning_dict = {"results": tuning_raw}
+elif isinstance(tuning_raw, dict):
+    tuning_dict = tuning_raw
+else:
+    tuning_dict = {}
+
 # ── Section 1: Best Hyperparameters ────────────────────────────
 st.header(tr("best_params"))
-best_params = data.get("best_params", data.get("best_parameters", data.get("best", {})))
+best_params = tuning_dict.get("best_params", data.get("best_params", data.get("best_parameters", data.get("best", {}))))
 if best_params:
     if isinstance(best_params, dict):
         bp_items = [k for k in best_params.keys() if k not in ("score", "Score", "value", "Value")]
@@ -86,7 +94,7 @@ else:
 
 # ── Section 2: Top 3 Configurations ────────────────────────────
 st.header(tr("top_configs"))
-all_results = data.get("results", data.get("trials", data.get("configurations", [])))
+all_results = tuning_dict.get("results", tuning_dict.get("trials", data.get("results", data.get("trials", data.get("configurations", [])))))
 if all_results:
     df_all = pd.DataFrame(all_results)
     score_col = next((c for c in ["score", "Score", "mean_test_score", "value"] if c in df_all.columns), None)
@@ -107,7 +115,7 @@ if all_results:
 
 # ── Section 3: Parameter Importance ────────────────────────────
 st.header(tr("param_importance"))
-importance = data.get("importance", data.get("param_importance", data.get("feature_importance", {})))
+importance = tuning_dict.get("importance", data.get("importance", data.get("param_importance", data.get("feature_importance", {}))))
 if importance:
     if isinstance(importance, dict):
         df_imp = pd.DataFrame([
@@ -130,7 +138,7 @@ else:
 
 # ── Section 4: Optimization History ────────────────────────────
 st.header(tr("optimization_history"))
-history = data.get("history", data.get("optimization_history", data.get("search_history", [])))
+history = tuning_dict.get("history", data.get("history", data.get("optimization_history", data.get("search_history", []))))
 if history:
     if isinstance(history, list):
         df_hist = pd.DataFrame(history)
