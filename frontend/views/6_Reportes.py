@@ -145,7 +145,7 @@ with col1:
             styles = getSampleStyleSheet()
             story = []
 
-            story.append(Paragraph("California Housing ML Report", styles["Title"]))
+            story.append(Paragraph("Financial Forecasting Report", styles["Title"]))
             story.append(Spacer(1, 12))
             story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles["Normal"]))
             story.append(Spacer(1, 24))
@@ -175,7 +175,7 @@ with col1:
             st.download_button(
                 label="📥 " + tr("download_pdf"),
                 data=buf,
-                file_name=f"california_housing_report_{report_lang}.pdf",
+                file_name=f"financial_forecast_report_{report_lang}.pdf",
                 mime="application/pdf",
                 use_container_width=True,
             )
@@ -193,7 +193,7 @@ with col2:
             buf = io.BytesIO()
             doc = Document()
 
-            title = doc.add_heading("California Housing ML Report", 0)
+            title = doc.add_heading("Financial Forecasting Report", 0)
             title.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
             p = doc.add_paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
