@@ -11,8 +11,8 @@ if not st.session_state.get("authenticated"):
 
 LANG = {
     "es": {
-        "title": "Generación de Reportes",
-        "subtitle": "Descargue reportes detallados del análisis completo",
+        "title": "Generación de Reportes Financieros",
+        "subtitle": "Descargue reportes detallados del análisis financiero",
         "language_selection": "Selección de Idioma",
         "download_pdf": "Descargar Reporte PDF",
         "download_word": "Descargar Reporte Word",
@@ -20,7 +20,7 @@ LANG = {
         "sections": "Secciones del Reporte",
         "sections_list": [
             "Resumen Ejecutivo",
-            "Análisis Exploratorio de Datos",
+            "Análisis Exploratorio de Datos Financieros",
             "Entrenamiento de Modelos",
             "Validación Cruzada",
             "Optimización de Hiperparámetros",
@@ -33,11 +33,11 @@ LANG = {
         "select_language": "Seleccione el idioma del reporte",
         "loading_data": "Cargando datos...",
         "preview": "Resumen del proyecto",
-        "preview_text": "Este reporte incluye el análisis completo del dataset California Housing con 5 modelos de regresión neuronal.",
+        "preview_text": "Este reporte incluye el análisis completo del dataset financiero con 5 modelos de redes neuronales para pronóstico.",
     },
     "en": {
-        "title": "Report Generation",
-        "subtitle": "Download detailed reports of the complete analysis",
+        "title": "Financial Report Generation",
+        "subtitle": "Download detailed reports of the financial analysis",
         "language_selection": "Language Selection",
         "download_pdf": "Download PDF Report",
         "download_word": "Download Word Report",
@@ -45,7 +45,7 @@ LANG = {
         "sections": "Report Sections",
         "sections_list": [
             "Executive Summary",
-            "Exploratory Data Analysis",
+            "Financial Exploratory Data Analysis",
             "Model Training",
             "Cross Validation",
             "Hyperparameter Tuning",
@@ -58,7 +58,7 @@ LANG = {
         "select_language": "Select report language",
         "loading_data": "Loading data...",
         "preview": "Project Summary",
-        "preview_text": "This report includes the complete analysis of the California Housing dataset with 5 neural network regression models.",
+        "preview_text": "This report includes the complete analysis of the financial dataset with 5 neural network forecasting models.",
     },
 }
 

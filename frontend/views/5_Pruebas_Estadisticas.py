@@ -10,8 +10,8 @@ if not st.session_state.get("authenticated"):
 
 LANG = {
     "es": {
-        "title": "Pruebas Estadísticas",
-        "subtitle": "Validación estadística de los modelos de regresión",
+        "title": "Pruebas Estadísticas - Financiero",
+        "subtitle": "Validación estadística de los modelos de pronóstico financiero",
         "shapiro": "Prueba de Normalidad (Shapiro-Wilk)",
         "shapiro_desc": "Evalúa si los residuos siguen una distribución normal",
         "durbin_watson": "Prueba de Autocorrelación (Durbin-Watson)",

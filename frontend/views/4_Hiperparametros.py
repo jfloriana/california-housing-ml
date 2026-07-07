@@ -10,8 +10,8 @@ if not st.session_state.get("authenticated"):
 
 LANG = {
     "es": {
-        "title": "Optimización de Hiperparámetros",
-        "subtitle": "Búsqueda de la mejor configuración de hiperparámetros",
+        "title": "Optimización de Hiperparámetros - Financiero",
+        "subtitle": "Búsqueda de la mejor configuración para pronóstico financiero",
         "best_params": "Mejores Hiperparámetros",
         "top_configs": "Comparación Top 3 Configuraciones",
         "param_importance": "Importancia de Parámetros",

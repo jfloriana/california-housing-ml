@@ -10,8 +10,8 @@ if not st.session_state.get("authenticated"):
 
 LANG = {
     "es": {
-        "title": "Dashboard General",
-        "subtitle": "Resumen completo del proyecto California Housing ML",
+        "title": "Dashboard Financiero",
+        "subtitle": "Resumen completo del proyecto de pronóstico financiero",
         "total_models": "Total Modelos",
         "best_r2": "Mejor R²",
         "best_rmse": "Mejor RMSE",

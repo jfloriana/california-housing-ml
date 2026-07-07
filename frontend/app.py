@@ -3,8 +3,8 @@ import os
 from utils import api_client
 
 st.set_page_config(
-    page_title="California Housing ML",
-    page_icon="🏠",
+    page_title="Financial Forecasting - NN",
+    page_icon="📈",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -40,7 +40,7 @@ if "api_metrics_cache" not in st.session_state:
 # Translation dictionary
 LANG = {
     "es": {
-        "app_title": "California Housing - Regresión con Redes Neuronales",
+        "app_title": "Pronóstico Financiero con Redes Neuronales",
         "login": "Iniciar Sesión",
         "signup": "Registrarse",
         "email": "Correo electrónico",
@@ -50,7 +50,6 @@ LANG = {
         "logout": "Cerrar Sesión",
         "welcome": "Bienvenido",
         "error_auth": "Error de autenticación",
-        # Navigation
         "nav_eda": "EDA - Análisis Exploratorio",
         "nav_training": "Entrenamiento de Modelos",
         "nav_cv": "Validación Cruzada",
@@ -58,13 +57,13 @@ LANG = {
         "nav_stats": "Pruebas Estadísticas",
         "nav_reports": "Reportes",
         "nav_dashboard": "Dashboard General",
-        "nav_predict": "Predecir",
+        "nav_predict": "Pronosticar",
         "language": "Idioma",
         "spanish": "Español",
         "english": "Inglés",
     },
     "en": {
-        "app_title": "California Housing - Neural Network Regression",
+        "app_title": "Financial Forecasting with Neural Networks",
         "login": "Login",
         "signup": "Sign Up",
         "email": "Email",
@@ -81,7 +80,7 @@ LANG = {
         "nav_stats": "Statistical Tests",
         "nav_reports": "Reports",
         "nav_dashboard": "General Dashboard",
-        "nav_predict": "Predict",
+        "nav_predict": "Forecast",
         "language": "Language",
         "spanish": "Spanish",
         "english": "English",

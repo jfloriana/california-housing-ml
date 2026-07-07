@@ -9,7 +9,7 @@ if not st.session_state.get("authenticated"):
 
 LANG = {
     "es": {
-        "title": "Validación Cruzada",
+        "title": "Validación Cruzada - Modelos Financieros",
         "subtitle": "Evaluación mediante K-Fold Cross Validation",
         "config": "Configuración",
         "folds": "Número de Folds",

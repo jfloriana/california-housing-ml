@@ -10,8 +10,8 @@ if not st.session_state.get("authenticated"):
 
 LANG = {
     "es": {
-        "title": "Entrenamiento de Modelos",
-        "subtitle": "Comparación de 5 modelos de regresión",
+        "title": "Entrenamiento de Modelos Financieros",
+        "subtitle": "Comparación de 5 redes neuronales para pronóstico financiero",
         "comparison_table": "Tabla Comparativa de Modelos",
         "bar_chart": "Comparación Visual R² y RMSE",
         "best_model": "Mejor Modelo",
@@ -33,11 +33,11 @@ LANG = {
         "epoch": "Época",
         "loss": "Pérdida",
         "val_loss": "Pérdida de Validación",
-        "interpretation_text": "El mejor modelo es {best_model} con un R² de {best_r2:.4f} y RMSE de {best_rmse:.4f}. Comparando los {model_count} modelos, se observa que {best_model} supera a los demás en {metric_name}.",
+        "interpretation_text": "El mejor modelo es {best_model} con un R² de {best_r2:.4f} y RMSE de {best_rmse:.4f}. Comparando los {model_count} modelos financieros, {best_model} supera a los demás en {metric_name}.",
     },
     "en": {
-        "title": "Model Training",
-        "subtitle": "Comparison of 5 regression models",
+        "title": "Financial Model Training",
+        "subtitle": "Comparison of 5 neural networks for financial forecasting",
         "comparison_table": "Model Comparison Table",
         "bar_chart": "Visual Comparison R² and RMSE",
         "best_model": "Best Model",
@@ -83,7 +83,7 @@ with col_info:
     if "last_train_time" in st.session_state:
         st.caption(f"Último entrenamiento: {st.session_state.last_train_time}")
     if not has_uploaded:
-        st.caption("Usando datos precargados (California Housing). Sube un dataset en EDA para entrenar con datos propios.")
+        st.caption("Usando datos precargados de ejemplo. Sube tu dataset financiero en EDA para entrenar con datos propios.")
 
 if retrain_clicked:
     if not has_uploaded:
