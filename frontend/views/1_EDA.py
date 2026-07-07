@@ -98,8 +98,10 @@ if "uploaded_df" not in st.session_state:
     st.session_state.uploaded_df = None
 if "target_col" not in st.session_state:
     st.session_state.target_col = None
+if "show_yahoo" not in st.session_state:
+    st.session_state.show_yahoo = False
 
-col_up, col_sample = st.columns([3, 1])
+col_up, col_sample, col_yf = st.columns([2, 1, 1])
 with col_up:
     uploaded_file = st.file_uploader(tr("upload_header"), type="csv", help=tr("upload_hint"))
 with col_sample:
@@ -114,6 +116,63 @@ with col_sample:
             st.rerun()
         except Exception as e:
             st.error(f"Error al cargar dataset de ejemplo: {e}")
+with col_yf:
+    st.markdown("### &nbsp;")
+    if st.button("📈 Yahoo Finance", use_container_width=True):
+        st.session_state.show_yahoo = not st.session_state.get("show_yahoo", False)
+        st.rerun()
+
+if st.session_state.get("show_yahoo"):
+    st.markdown("---")
+    st.subheader("📈 Yahoo Finance")
+    with st.form("yfinance_form"):
+        c1, c2, c3 = st.columns([2, 1, 1])
+        with c1:
+            ticker = st.text_input("Ticker (ej: AAPL, TSLA, BTC-USD, ^GSPC)", value="AAPL").strip().upper()
+        with c2:
+            start_date = st.date_input("Desde", pd.to_datetime("2020-01-01"))
+        with c3:
+            end_date = st.date_input("Hasta", pd.to_datetime("today"))
+        submitted = st.form_submit_button("Descargar y calcular indicadores", type="primary", use_container_width=True)
+    if submitted:
+        try:
+            import yfinance as yf
+            st.info(f"Descargando {ticker}...")
+            data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+            if data.empty:
+                st.error(f"No hay datos para {ticker} en el rango seleccionado.")
+                st.stop()
+            df_yf = data.reset_index()
+            df_yf.columns = [c[0] if isinstance(c, tuple) else c for c in df_yf.columns]
+            # Compute technical indicators
+            close_sma_10 = df_yf["Close"].rolling(10).mean()
+            close_sma_50 = df_yf["Close"].rolling(50).mean()
+            close_ema_20 = df_yf["Close"].ewm(span=20, adjust=False).mean()
+            delta = df_yf["Close"].diff()
+            gain = delta.where(delta > 0, 0)
+            loss = (-delta).where(delta > 0, 0)
+            avg_gain = gain.rolling(14).mean()
+            avg_loss = loss.rolling(14).mean()
+            rs = avg_gain / (avg_loss + 1e-10)
+            rsi_14 = 100 - (100 / (1 + rs))
+            volume_sma_20 = df_yf["Volume"].rolling(20).mean()
+            volatility = df_yf["Close"].pct_change().rolling(20).std() * (252 ** 0.5)
+            df_yf["SMA_10"] = close_sma_10
+            df_yf["SMA_50"] = close_sma_50
+            df_yf["EMA_20"] = close_ema_20
+            df_yf["RSI_14"] = rsi_14
+            df_yf["Volume_SMA_20"] = volume_sma_20
+            df_yf["Volatility"] = volatility
+            df_yf = df_yf.dropna().reset_index(drop=True)
+            st.session_state.uploaded_df = df_yf
+            st.session_state.target_col = "Close"
+            st.session_state.show_yahoo = False
+            st.success(f"✅ {df_yf.shape[0]} filas descargadas de {ticker}. Target: Close (precio de cierre)")
+            st.rerun()
+        except ImportError:
+            st.error("yfinance no está instalado. Ejecuta: pip install yfinance")
+        except Exception as e:
+            st.error(f"Error: {e}")
 
 if uploaded_file is not None:
     try:
