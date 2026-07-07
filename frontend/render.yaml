@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: california-housing-frontend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port 10000 --server.headless true --server.address 0.0.0.0
+    envVars:
+      - key: SUPABASE_URL
+        fromEnv: SUPABASE_URL
+      - key: SUPABASE_ANON_KEY
+        fromEnv: SUPABASE_ANON_KEY
+      - key: API_BASE_URL
+        value: https://api-delta-three-96.vercel.app
