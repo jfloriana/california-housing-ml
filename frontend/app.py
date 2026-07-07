@@ -6,7 +6,7 @@ st.set_page_config(
     page_title="California Housing ML",
     page_icon="🏠",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 
@@ -91,6 +91,12 @@ def tr(key):
 
 # ── Login Page ──────────────────────────────────────────────────────
 def login_page():
+    st.markdown("""
+<style>
+    section[data-testid="stSidebar"] { display: none !important; }
+    header[data-testid="stHeader"] { display: none !important; }
+</style>
+""", unsafe_allow_html=True)
     st.title(tr("app_title"))
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
