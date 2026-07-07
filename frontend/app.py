@@ -182,14 +182,14 @@ def main_app():
     
     # Page routing
     page_map = {
-        tr("nav_dashboard"): "pages/7_Dashboard.py",
-        tr("nav_eda"): "pages/1_EDA.py",
-        tr("nav_training"): "pages/2_Entrenamiento.py",
-        tr("nav_cv"): "pages/3_Validacion_Cruzada.py",
-        tr("nav_tuning"): "pages/4_Hiperparametros.py",
-        tr("nav_stats"): "pages/5_Pruebas_Estadisticas.py",
-        tr("nav_reports"): "pages/6_Reportes.py",
-        tr("nav_predict"): "pages/8_Predict.py",
+        tr("nav_dashboard"): "views/7_Dashboard.py",
+        tr("nav_eda"): "views/1_EDA.py",
+        tr("nav_training"): "views/2_Entrenamiento.py",
+        tr("nav_cv"): "views/3_Validacion_Cruzada.py",
+        tr("nav_tuning"): "views/4_Hiperparametros.py",
+        tr("nav_stats"): "views/5_Pruebas_Estadisticas.py",
+        tr("nav_reports"): "views/6_Reportes.py",
+        tr("nav_predict"): "views/8_Predict.py",
     }
     
     page_file = page_map.get(selected_page)
