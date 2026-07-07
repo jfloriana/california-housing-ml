@@ -42,7 +42,7 @@ LANG = {
     },
     "en": {
         "title": "General Dashboard",
-        "subtitle": "Complete summary of the California Housing ML project",
+        "subtitle": "Complete summary of the financial forecasting project",
         "total_models": "Total Models",
         "best_r2": "Best R²",
         "best_rmse": "Best RMSE",
