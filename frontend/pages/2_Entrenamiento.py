@@ -78,7 +78,7 @@ except Exception as e:
     st.error(f"{tr('loading_error')}: {e}")
     st.stop()
 
-models = data.get("models", data.get("results", []))
+models = data.get("metrics", data.get("models", data.get("results", [])))
 
 # ── Section 1: Comparison Table ────────────────────────────────
 st.header(tr("comparison_table"))

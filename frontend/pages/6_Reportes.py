@@ -1,6 +1,8 @@
 import streamlit as st
-import requests
+import pandas as pd
 import io
+import json
+from datetime import datetime
 from utils import api_client
 
 if not st.session_state.get("authenticated"):
@@ -15,7 +17,6 @@ LANG = {
         "download_pdf": "Descargar Reporte PDF",
         "download_word": "Descargar Reporte Word",
         "download_excel": "Descargar Reporte Excel",
-        "preview": "Vista Previa del Contenido",
         "sections": "Secciones del Reporte",
         "sections_list": [
             "Resumen Ejecutivo",
@@ -26,12 +27,13 @@ LANG = {
             "Pruebas Estadísticas",
             "Conclusiones y Recomendaciones",
         ],
-        "preview_text": "Este reporte incluye análisis completo del dataset California Housing, incluyendo EDA, entrenamiento de 5 modelos de regresión, validación cruzada, optimización de hiperparámetros y pruebas estadísticas.",
         "generating": "Generando reporte...",
         "success": "Reporte generado correctamente",
         "error": "Error al generar el reporte",
-        "no_backend": "No se pudo conectar con el backend para generar reportes",
         "select_language": "Seleccione el idioma del reporte",
+        "loading_data": "Cargando datos...",
+        "preview": "Resumen del proyecto",
+        "preview_text": "Este reporte incluye el análisis completo del dataset California Housing con 5 modelos de regresión neuronal.",
     },
     "en": {
         "title": "Report Generation",
@@ -40,7 +42,6 @@ LANG = {
         "download_pdf": "Download PDF Report",
         "download_word": "Download Word Report",
         "download_excel": "Download Excel Report",
-        "preview": "Content Preview",
         "sections": "Report Sections",
         "sections_list": [
             "Executive Summary",
@@ -51,26 +52,24 @@ LANG = {
             "Statistical Tests",
             "Conclusions and Recommendations",
         ],
-        "preview_text": "This report includes a complete analysis of the California Housing dataset, including EDA, training of 5 regression models, cross validation, hyperparameter tuning, and statistical tests.",
         "generating": "Generating report...",
         "success": "Report generated successfully",
         "error": "Error generating report",
-        "no_backend": "Could not connect to the backend to generate reports",
         "select_language": "Select report language",
+        "loading_data": "Loading data...",
+        "preview": "Project Summary",
+        "preview_text": "This report includes the complete analysis of the California Housing dataset with 5 neural network regression models.",
     },
 }
 
 def tr(key):
-    val = LANG.get(st.session_state.language, LANG["es"]).get(key, key)
-    return val
+    return LANG.get(st.session_state.language, LANG["es"]).get(key, key)
 
 lang = st.session_state.language
 st.title(tr("title"))
 st.markdown(f"*{tr('subtitle')}*")
 st.markdown("---")
 
-# Language selector
-st.subheader(tr("language_selection"))
 report_lang = st.radio(
     tr("select_language"),
     options=["es", "en"],
@@ -81,77 +80,173 @@ report_lang = st.radio(
 
 st.markdown("---")
 
-# ── Download buttons ─────────────────────────────────────────────
+with st.spinner(tr("loading_data")):
+    try:
+        all_data = api_client.get_all_metrics()
+    except Exception:
+        all_data = {}
+
+def _build_df_sections(data):
+    sections = {
+        "eda": pd.DataFrame(),
+        "training": pd.DataFrame(),
+        "cv": pd.DataFrame(),
+        "tuning": pd.DataFrame(),
+        "stats": pd.DataFrame(),
+    }
+    eda_raw = data.get("eda", {})
+    if eda_raw:
+        rows = eda_raw.get("descriptive_stats", {})
+        if rows:
+            sections["eda"] = pd.DataFrame(rows).T.reset_index().rename(columns={"index": "Feature"})
+    training_raw = data.get("training", [])
+    if training_raw:
+        sections["training"] = pd.DataFrame(training_raw)
+    cv_raw = data.get("cross_validation", [])
+    if cv_raw:
+        sections["cv"] = pd.DataFrame(cv_raw)
+    tuning_raw = data.get("hyperparameter_tuning", [])
+    if tuning_raw:
+        sections["tuning"] = pd.DataFrame(tuning_raw)
+    stats_raw = data.get("statistical_tests", {})
+    if stats_raw:
+        rows_list = []
+        for test_name, test_data in stats_raw.items():
+            if isinstance(test_data, dict):
+                rows_list.append({"Test": test_name, **test_data})
+        if rows_list:
+            sections["stats"] = pd.DataFrame(rows_list)
+    return sections
+
+# ── Generate reports ──
 col1, col2, col3 = st.columns(3)
 
-def fetch_report(format_name, language):
-    try:
-        url = api_client.generate_report_url(format_name, language)
-        response = requests.get(url, timeout=60)
-        response.raise_for_status()
-        return response.content
-    except requests.exceptions.RequestException as e:
-        st.error(f"{tr('error')}: {e}")
-        return None
-
 with col1:
-    with st.container():
-        st.markdown("##### 📄 PDF")
-        st.markdown("Portable Document Format")
-        pdf_bytes = fetch_report("pdf", report_lang)
-        if pdf_bytes:
+    st.markdown("##### 📄 PDF")
+    if st.button(tr("download_pdf"), use_container_width=True):
+        try:
+            from reportlab.lib.pagesizes import letter
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+            from reportlab.lib.styles import getSampleStyleSheet
+            from reportlab.lib import colors
+
+            buf = io.BytesIO()
+            doc = SimpleDocTemplate(buf, pagesize=letter)
+            styles = getSampleStyleSheet()
+            story = []
+
+            story.append(Paragraph("California Housing ML Report", styles["Title"]))
+            story.append(Spacer(1, 12))
+            story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles["Normal"]))
+            story.append(Spacer(1, 24))
+
+            sections_data = _build_df_sections(all_data)
+            for section_name, df in sections_data.items():
+                if not df.empty:
+                    story.append(Paragraph(section_name.upper(), styles["Heading2"]))
+                    story.append(Spacer(1, 8))
+                    table_data = [df.columns.tolist()] + df.astype(str).values.tolist()
+                    t = Table(table_data, repeatRows=1)
+                    t.setStyle(TableStyle([
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#667eea")),
+                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                        ("FONTSIZE", (0, 0), (-1, -1), 8),
+                        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+                    ]))
+                    story.append(t)
+                    story.append(Spacer(1, 16))
+
+            doc.build(story)
+            buf.seek(0)
+
             st.download_button(
-                label=tr("download_pdf"),
-                data=pdf_bytes,
+                label="📥 " + tr("download_pdf"),
+                data=buf,
                 file_name=f"california_housing_report_{report_lang}.pdf",
                 mime="application/pdf",
                 use_container_width=True,
             )
-        else:
-            st.warning(tr("no_backend"))
+        except Exception as e:
+            st.error(f"{tr('error')}: {e}")
 
 with col2:
-    with st.container():
-        st.markdown("##### 📝 Word")
-        st.markdown("Microsoft Word format")
-        docx_bytes = fetch_report("word", report_lang)
-        if docx_bytes:
+    st.markdown("##### 📝 Word")
+    if st.button(tr("download_word"), use_container_width=True):
+        try:
+            from docx import Document
+            from docx.shared import Inches, Pt
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+            buf = io.BytesIO()
+            doc = Document()
+
+            title = doc.add_heading("California Housing ML Report", 0)
+            title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            p = doc.add_paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            doc.add_page_break()
+
+            sections_data = _build_df_sections(all_data)
+            for section_name, df in sections_data.items():
+                if not df.empty:
+                    doc.add_heading(section_name.upper(), level=1)
+                    table = doc.add_table(rows=1, cols=len(df.columns))
+                    table.style = "Light Grid Accent 1"
+                    for j, col_name in enumerate(df.columns):
+                        table.rows[0].cells[j].text = str(col_name)
+                    for i, row in df.iterrows():
+                        row_cells = table.add_row().cells
+                        for j, col_name in enumerate(df.columns):
+                            row_cells[j].text = str(row[col_name])
+                    doc.add_paragraph()
+
+            doc.save(buf)
+            buf.seek(0)
+
             st.download_button(
-                label=tr("download_word"),
-                data=docx_bytes,
+                label="📥 " + tr("download_word"),
+                data=buf,
                 file_name=f"california_housing_report_{report_lang}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True,
             )
-        else:
-            st.warning(tr("no_backend"))
+        except Exception as e:
+            st.error(f"{tr('error')}: {e}")
 
 with col3:
-    with st.container():
-        st.markdown("##### 📊 Excel")
-        st.markdown("Microsoft Excel format")
-        xlsx_bytes = fetch_report("excel", report_lang)
-        if xlsx_bytes:
+    st.markdown("##### 📊 Excel")
+    if st.button(tr("download_excel"), use_container_width=True):
+        try:
+            buf = io.BytesIO()
+            with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+                sections_data = _build_df_sections(all_data)
+                for section_name, df in sections_data.items():
+                    if not df.empty:
+                        df.to_excel(writer, sheet_name=section_name.upper(), index=False)
+                meta = pd.DataFrame({
+                    "Project": ["California Housing ML"],
+                    "Generated": [datetime.now().strftime("%Y-%m-%d %H:%M")],
+                    "Language": [report_lang],
+                })
+                meta.to_excel(writer, sheet_name="Summary", index=False)
+            buf.seek(0)
+
             st.download_button(
-                label=tr("download_excel"),
-                data=xlsx_bytes,
+                label="📥 " + tr("download_excel"),
+                data=buf,
                 file_name=f"california_housing_report_{report_lang}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True,
             )
-        else:
-            st.warning(tr("no_backend"))
+        except Exception as e:
+            st.error(f"{tr('error')}: {e}")
 
 st.markdown("---")
-
-# ── Preview ──────────────────────────────────────────────────────
-st.header(tr("preview"))
+st.subheader(tr("preview"))
 st.info(tr("preview_text"))
 
 st.subheader(tr("sections"))
-sections = tr("sections_list")
-for i, section in enumerate(sections, 1):
+for i, section in enumerate(tr("sections_list"), 1):
     st.markdown(f"**{i}.** {section}")
-
-st.markdown("---")
-st.caption("💡 " + (tr("select_language") if lang == "es" else tr("select_language")))
