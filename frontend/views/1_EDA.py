@@ -43,6 +43,7 @@ LANG = {
         "target": "Objetivo",
         "samples": "Muestras",
         "numeric_cols": "Columnas Numéricas",
+        "sample_btn": "📊 Cargar dataset de ejemplo",
         "interpretation_text": "El dataset financiero contiene {samples} registros y {features} variables. La variable a pronosticar es '{target}'.",
     },
     "en": {
@@ -79,6 +80,7 @@ LANG = {
         "target": "Target",
         "samples": "Samples",
         "numeric_cols": "Numeric Columns",
+        "sample_btn": "📊 Load sample dataset",
         "interpretation_text": "The financial dataset contains {samples} records and {features} variables. The forecast target is '{target}'.",
     },
 }
@@ -97,7 +99,21 @@ if "uploaded_df" not in st.session_state:
 if "target_col" not in st.session_state:
     st.session_state.target_col = None
 
-uploaded_file = st.file_uploader(tr("upload_header"), type="csv", help=tr("upload_hint"))
+col_up, col_sample = st.columns([3, 1])
+with col_up:
+    uploaded_file = st.file_uploader(tr("upload_header"), type="csv", help=tr("upload_hint"))
+with col_sample:
+    st.markdown("### &nbsp;")
+    if st.button(tr("sample_btn"), use_container_width=True):
+        try:
+            import os
+            sample_path = os.path.join(os.path.dirname(__file__), "..", "sample_data.csv")
+            df = pd.read_csv(sample_path)
+            st.session_state.uploaded_df = df
+            st.session_state.target_col = "Target_Next_Close"
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error al cargar dataset de ejemplo: {e}")
 
 if uploaded_file is not None:
     try:
