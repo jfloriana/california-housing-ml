@@ -175,7 +175,7 @@ else:
 # ── Section 4: Friedman Test ────────────────────────────────────
 st.header(tr("friedman"))
 st.caption(tr("friedman_desc"))
-friedman = stats_data.get("friedman", stats_data.get("friedman_test", {}))
+friedman = _unwrap(stats_data.get("friedman", stats_data.get("friedman_test", {})))
 if friedman:
     f_stat = friedman.get("statistic", friedman.get("stat", "N/A"))
     f_pval = friedman.get("p_value", friedman.get("pvalue", friedman.get("p", "N/A")))
@@ -218,7 +218,7 @@ else:
         df_tests = pd.DataFrame(tests_table)
         st.dataframe(df_tests, use_container_width=True)
     else:
-        st.info("No pairwise comparison data available.")
+        pass  # pairwise data not available from API
 
 # ── Section 6: Combined Interpretation ──────────────────────────
 st.header(tr("combined_interpretation"))
