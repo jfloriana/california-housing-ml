@@ -114,8 +114,7 @@ if models_list:
     if rmse_c:
         best_rmse_val = f"{df_m[rmse_c].min():.4f}" if df_m[rmse_c].dtype in ("float64", "int64") else str(df_m[rmse_c].min())
 
-shape = eda.get("shape", {})
-dataset_size = shape.get("rows", "N/A")
+dataset_size = eda.get("samples", eda.get("shape", {}).get("rows", "N/A"))
 if isinstance(dataset_size, int):
     dataset_size = f"{dataset_size:,}"
 
@@ -167,16 +166,16 @@ st.markdown("---")
 st.subheader(f"📈 {tr('model_comparison')}")
 if models_list:
     df_mc = pd.DataFrame(models_list)
-    name_col = "name" if "name" in df_mc.columns else "model"
+    name_col = next((c for c in ["model_name", "name", "model"] if c in df_mc.columns), None)
     r2c = next((c for c in ["R2", "R²", "r2"] if c in df_mc.columns), None)
     rmsec = next((c for c in ["RMSE", "rmse"] if c in df_mc.columns), None)
 
-    if r2c and rmsec:
+    if name_col and r2c and rmsec:
         df_plot = df_mc[[name_col, r2c, rmsec]].melt(
-            id_vars=[name_col], var_name=tr("model"), value_name="Value"
+            id_vars=[name_col], var_name="Metric", value_name="Value"
         )
         fig_comp = px.bar(
-            df_plot, x=name_col, y="Value", color=tr("model"),
+            df_plot, x=name_col, y="Value", color="Metric",
             barmode="group", title=tr("model_comparison"),
             color_discrete_sequence=["#2E91E5", "#E76376"],
         )
@@ -189,7 +188,7 @@ else:
 
 # ── Row 3: Top Correlations ────────────────────────────────────
 st.subheader(f"🔗 {tr('top_correlations')}")
-corr_target = eda.get("correlation_with_target", eda.get("target_correlation", eda.get("corr_with_target", {})))
+corr_target = eda.get("correlations", eda.get("correlation_with_target", eda.get("target_correlation", eda.get("corr_with_target", {}))))
 if not corr_target:
     corr_matrix = eda.get("correlation_matrix", eda.get("correlation", eda.get("corr_matrix", {})))
     if isinstance(corr_matrix, dict):

@@ -115,11 +115,11 @@ else:
 st.header(tr("bar_chart"))
 if models:
     df_chart = pd.DataFrame(models)
-    name_col = "name" if "name" in df_chart.columns else "model"
+    name_col = next((c for c in ["model_name", "name", "model"] if c in df_chart.columns), None)
     r2_col = next((c for c in ["R2", "R²", "r2"] if c in df_chart.columns), None)
     rmse_col = next((c for c in ["RMSE", "rmse"] if c in df_chart.columns), None)
 
-    if r2_col and rmse_col:
+    if name_col and r2_col and rmse_col:
         df_plot = df_chart[[name_col, r2_col, rmse_col]].melt(
             id_vars=[name_col], var_name=tr("metric"), value_name=tr("value")
         )
@@ -145,7 +145,7 @@ if not best_model and models:
         best_model = df_temp.iloc[best_idx].to_dict()
 
 if best_model:
-    best_name = best_model.get("model") or best_model.get("name", tr("best_model"))
+    best_name = best_model.get("model_name") or best_model.get("model") or best_model.get("name", tr("best_model"))
     st.subheader(f"🏆 {best_name}")
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -204,7 +204,7 @@ else:
 st.header(tr("interpretation"))
 if models:
     df_temp = pd.DataFrame(models)
-    best_name_val = best_model.get("model") or best_model.get("name", "N/A")
+    best_name_val = best_model.get("model_name") or best_model.get("model") or best_model.get("name", "N/A")
     r2_col = next((c for c in ["R2", "R²", "r2"] if c in df_temp.columns), None)
     rmse_col = next((c for c in ["RMSE", "rmse"] if c in df_temp.columns), None)
     best_r2 = best_model.get(r2_col, 0) if r2_col else 0
