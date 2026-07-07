@@ -107,39 +107,16 @@ with c4:
 st.header(tr("fold_results"))
 if folds:
     df_folds = pd.DataFrame(folds)
-    fold_mse = next((c for c in ["MSE", "mse", "test_mse", "test_MSE"] if c in df_folds.columns), tr("mse"))
-    fold_r2 = next((c for c in ["R2", "R²", "r2", "test_r2", "test_R2"] if c in df_folds.columns), tr("r2"))
-    fold_label = next((c for c in ["fold", "Fold", "split", "Split"] if c in df_folds.columns), tr("fold"))
+    score_label = tr("r2")  # The API returns R² scores
+    fold_label = tr("fold")
 
-    col_map = {}
-    if fold_label not in [tr("fold"), "fold", "Fold"]:
-        pass
-
-    display_cols = []
-    if fold_label in df_folds.columns:
-        display_cols.append(fold_label)
-    if fold_mse in df_folds.columns:
-        display_cols.append(fold_mse)
-    if fold_r2 in df_folds.columns:
-        display_cols.append(fold_r2)
-    if not display_cols:
-        display_cols = df_folds.columns.tolist()
-
-    df_display = df_folds[display_cols].copy()
-    rename_map = {}
-    for old, new in [(fold_label, tr("fold")), (fold_mse, tr("mse")), (fold_r2, tr("r2"))]:
-        if old in df_display.columns and old != new:
-            rename_map[old] = new
-    if rename_map:
-        df_display = df_display.rename(columns=rename_map)
-
-    format_cols = [c for c in [tr("mse"), tr("r2")] if c in df_display.columns]
-    st.dataframe(df_display.style.format({tr("mse"): "{:.4f}", tr("r2"): "{:.4f}"}, subset=format_cols), use_container_width=True)
+    df_display = df_folds.rename(columns={"fold": fold_label, "score": score_label})
+    st.dataframe(df_display.style.format({score_label: "{:.4f}"}), use_container_width=True)
 
     # ── Section 3: Boxplot ──────────────────────────────────────────
     st.header(tr("boxplot"))
     fig_box = px.box(
-        df_display.melt(id_vars=[tr("fold")], value_vars=[tr("mse"), tr("r2")]),
+        df_display.melt(id_vars=[fold_label], value_vars=[score_label]),
         x="variable", y="value", color="variable",
         title=tr("boxplot"),
     )
@@ -148,20 +125,15 @@ if folds:
 
     # ── Section 4: Summary ──────────────────────────────────────────
     st.header(tr("summary"))
-    mean_mse = df_display[tr("mse")].mean() if tr("mse") in df_display.columns else 0
-    std_mse = df_display[tr("mse")].std() if tr("mse") in df_display.columns else 0
-    mean_r2 = df_display[tr("r2")].mean() if tr("r2") in df_display.columns else 0
-    std_r2 = df_display[tr("r2")].std() if tr("r2") in df_display.columns else 0
+    scores = df_display[score_label]
+    mean_val = scores.mean()
+    std_val = scores.std()
 
-    sc1, sc2, sc3, sc4 = st.columns(4)
+    sc1, sc2 = st.columns(2)
     with sc1:
-        st.metric(f"{tr('mean')} MSE", f"{mean_mse:.4f}")
+        st.metric(f"{tr('mean')} R²", f"{mean_val:.4f}")
     with sc2:
-        st.metric(f"{tr('std')} MSE", f"{std_mse:.4f}")
-    with sc3:
-        st.metric(f"{tr('mean')} R²", f"{mean_r2:.4f}")
-    with sc4:
-        st.metric(f"{tr('std')} R²", f"{std_r2:.4f}")
+        st.metric(f"{tr('std')} R²", f"{std_val:.4f}")
 
 else:
     summary = data.get("summary", data.get("mean", {}))
