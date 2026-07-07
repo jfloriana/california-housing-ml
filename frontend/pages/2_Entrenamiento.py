@@ -69,6 +69,40 @@ def tr(key):
 lang = st.session_state.language
 st.title(tr("title"))
 st.markdown(f"*{tr('subtitle')}*")
+
+# ── Retrain button ──
+col_btn, col_info = st.columns([1, 3])
+with col_btn:
+    retrain_clicked = st.button("🔄 Reentrenar modelos", type="primary", use_container_width=True)
+with col_info:
+    if "last_train_time" in st.session_state:
+        st.caption(f"Último entrenamiento: {st.session_state.last_train_time}")
+
+if retrain_clicked:
+    import datetime
+    from trainer import train_all
+    st.markdown("---")
+    status_placeholder = st.empty()
+    progress_bar = st.progress(0, text="Iniciando...")
+
+    def on_progress(v):
+        progress_bar.progress(v)
+
+    def on_status(msg):
+        status_placeholder.info(msg)
+
+    try:
+        results, _ = train_all(progress_callback=on_progress, status_callback=on_status)
+        st.session_state.trained_results = results
+        st.session_state.last_train_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        progress_bar.progress(1.0, text="¡Entrenamiento completado!")
+        status_placeholder.success("Todos los modelos entrenados exitosamente.")
+        st.rerun()
+    except Exception as e:
+        progress_bar.empty()
+        status_placeholder.error(f"Error durante entrenamiento: {e}")
+        st.stop()
+
 st.markdown("---")
 
 try:
@@ -78,7 +112,8 @@ except Exception as e:
     st.error(f"{tr('loading_error')}: {e}")
     st.stop()
 
-models = data.get("metrics", data.get("models", data.get("results", [])))
+trained = st.session_state.get("trained_results")
+models = trained if trained else data.get("metrics", data.get("models", data.get("results", [])))
 
 # ── Section 1: Comparison Table ────────────────────────────────
 st.header(tr("comparison_table"))
