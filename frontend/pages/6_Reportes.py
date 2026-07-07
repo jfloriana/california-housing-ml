@@ -87,11 +87,14 @@ report_lang = st.radio(
 
 st.markdown("---")
 
-with st.spinner(tr("loading_data")):
-    try:
-        all_data = api_client.get_all_metrics()
-    except Exception:
-        all_data = {}
+cache = st.session_state.api_metrics_cache
+if "all" not in cache:
+    with st.spinner(tr("loading_data")):
+        try:
+            cache["all"] = api_client.get_all_metrics()
+        except Exception:
+            cache["all"] = {}
+all_data = cache["all"]
 
 def _build_df_sections(data):
     sections = {

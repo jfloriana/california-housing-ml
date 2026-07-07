@@ -55,12 +55,15 @@ st.title(tr("title"))
 st.markdown(f"*{tr('subtitle')}*")
 st.markdown("---")
 
-try:
-    with st.spinner("Loading hyperparameter tuning data..."):
-        data = api_client.get_hyperparameter_tuning()
-except Exception as e:
-    st.error(f"{tr('loading_error')}: {e}")
-    st.stop()
+cache = st.session_state.api_metrics_cache
+if "tuning" not in cache:
+    try:
+        with st.spinner("Loading hyperparameter tuning data..."):
+            cache["tuning"] = api_client.get_hyperparameter_tuning()
+    except Exception as e:
+        st.error(f"{tr('loading_error')}: {e}")
+        st.stop()
+data = cache["tuning"]
 
 tuning_raw = data.get("hyperparameter_tuning", data.get("tuning", data.get("results", data.get("trials", []))))
 if isinstance(tuning_raw, list):

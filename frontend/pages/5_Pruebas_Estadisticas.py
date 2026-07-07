@@ -89,12 +89,15 @@ st.title(tr("title"))
 st.markdown(f"*{tr('subtitle')}*")
 st.markdown("---")
 
-try:
-    with st.spinner("Loading statistical test data..."):
-        data = api_client.get_statistical_tests()
-except Exception as e:
-    st.error(f"{tr('loading_error')}: {e}")
-    st.stop()
+cache = st.session_state.api_metrics_cache
+if "stats" not in cache:
+    try:
+        with st.spinner("Loading statistical test data..."):
+            cache["stats"] = api_client.get_statistical_tests()
+    except Exception as e:
+        st.error(f"{tr('loading_error')}: {e}")
+        st.stop()
+data = cache["stats"]
 
 stats_data = data.get("statistical_tests", data.get("stats", data))
 

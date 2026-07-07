@@ -81,12 +81,15 @@ st.title(tr("title"))
 st.markdown(f"*{tr('subtitle')}*")
 st.markdown("---")
 
-try:
-    with st.spinner("Loading dashboard data..."):
-        all_data = api_client.get_all_metrics()
-except Exception as e:
-    st.error(f"{tr('loading_error')}: {e}")
-    all_data = {}
+cache = st.session_state.api_metrics_cache
+if "all" not in cache:
+    try:
+        with st.spinner("Loading dashboard data..."):
+            cache["all"] = api_client.get_all_metrics()
+    except Exception as e:
+        st.error(f"{tr('loading_error')}: {e}")
+        cache["all"] = {}
+all_data = cache["all"]
 
 # Extract data
 eda = all_data.get("eda", all_data.get("eda_results", {}))

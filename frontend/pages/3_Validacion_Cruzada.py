@@ -64,12 +64,15 @@ st.title(tr("title"))
 st.markdown(f"*{tr('subtitle')}*")
 st.markdown("---")
 
-try:
-    with st.spinner("Loading cross validation data..."):
-        data = api_client.get_cross_validation()
-except Exception as e:
-    st.error(f"{tr('loading_error')}: {e}")
-    st.stop()
+cache = st.session_state.api_metrics_cache
+if "cv" not in cache:
+    try:
+        with st.spinner("Loading cross validation data..."):
+            cache["cv"] = api_client.get_cross_validation()
+    except Exception as e:
+        st.error(f"{tr('loading_error')}: {e}")
+        st.stop()
+data = cache["cv"]
 
 # ── Parse API data ──────────────────────────────────────────────
 cv_raw = data.get("cross_validation", data.get("cv", data.get("folds", data.get("results", data.get("cv_results", [])))))
