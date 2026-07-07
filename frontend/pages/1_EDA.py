@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
-from utils import api_client
 
 if not st.session_state.get("authenticated"):
     st.warning("Please login")
@@ -12,87 +11,75 @@ if not st.session_state.get("authenticated"):
 LANG = {
     "es": {
         "title": "Análisis Exploratorio de Datos",
-        "subtitle": "Exploración completa del dataset California Housing",
+        "subtitle": "Sube un dataset CSV público para analizarlo",
+        "upload_header": "Cargar Dataset",
+        "upload_hint": "Sube un archivo CSV con datos numéricos para regresión",
+        "uploaded_file": "Archivo cargado",
+        "target_select": "Selecciona la variable objetivo (target)",
+        "start_eda": "Iniciar EDA",
         "dataset_info": "Información del Dataset",
-        "shape": "Dimensiones",
         "rows": "Filas",
         "cols": "Columnas",
         "columns": "Columnas",
-        "dtypes": "Tipos de Datos",
         "descriptive_stats": "Estadísticas Descriptivas",
         "missing_duplicates": "Valores Faltantes y Duplicados",
         "missing": "Valores Faltantes",
         "duplicates": "Filas Duplicadas",
-        "outliers": "Detección de Valores Atípicos (Outliers)",
-        "outliers_iqr": "Outliers (IQR)",
-        "outliers_zscore": "Outliers (Z-Score)",
+        "outliers": "Valores Atípicos (Outliers por IQR)",
         "correlation_matrix": "Matriz de Correlación",
-        "correlation_target": "Correlación con la Variable Objetivo",
-        "interpretation": "Interpretación de Resultados",
-        "no_data": "No se pudieron cargar los datos de EDA",
-        "loading_error": "Error al cargar datos de EDA",
-        "no_outlier_data": "No hay datos de outliers disponibles",
-        "no_corr_data": "No hay datos de correlación disponibles",
-        "total": "Total",
-        "feature": "Característica",
+        "correlation_target": "Correlación con Variable Objetivo",
+        "interpretation": "Interpretación",
+        "no_data": "No hay datos cargados. Sube un CSV para comenzar.",
+        "loading_error": "Error al procesar el archivo",
+        "feature": "Variable",
         "correlation": "Correlación",
         "variable": "Variable",
-        "type": "Tipo",
         "count": "Conteo",
         "mean": "Media",
         "std": "Desviación Estándar",
         "min": "Mínimo",
         "max": "Máximo",
-        "p25": "25%",
-        "p50": "50% (Mediana)",
-        "p75": "75%",
-        "skew": "Asimetría (Skewness)",
-        "kurt": "Curtosis",
-        "method": "Método",
-        "value": "Valor",
-        "interpretation_text": "El dataset de California Housing contiene {rows} registros y {cols} características. Se detectaron {outliers_iqr} outliers por el método IQR y {outliers_zscore} por Z-Score. Las correlaciones más fuertes con el valor de la vivienda son: {top_corr}.",
+        "loading_data": "Procesando datos...",
+        "target": "Objetivo",
+        "samples": "Muestras",
+        "numeric_cols": "Columnas Numéricas",
+        "interpretation_text": "El dataset contiene {samples} muestras y {features} features. La variable objetivo es '{target}'.",
     },
     "en": {
         "title": "Exploratory Data Analysis",
-        "subtitle": "Complete exploration of the California Housing dataset",
+        "subtitle": "Upload a public CSV dataset for analysis",
+        "upload_header": "Upload Dataset",
+        "upload_hint": "Upload a CSV file with numeric data for regression",
+        "uploaded_file": "Uploaded file",
+        "target_select": "Select the target variable",
+        "start_eda": "Run EDA",
         "dataset_info": "Dataset Information",
-        "shape": "Shape",
         "rows": "Rows",
         "cols": "Columns",
         "columns": "Columns",
-        "dtypes": "Data Types",
         "descriptive_stats": "Descriptive Statistics",
         "missing_duplicates": "Missing Values and Duplicates",
         "missing": "Missing Values",
         "duplicates": "Duplicate Rows",
-        "outliers": "Outlier Detection",
-        "outliers_iqr": "Outliers (IQR)",
-        "outliers_zscore": "Outliers (Z-Score)",
+        "outliers": "Outliers (IQR)",
         "correlation_matrix": "Correlation Matrix",
-        "correlation_target": "Correlation with Target Variable",
-        "interpretation": "Results Interpretation",
-        "no_data": "Could not load EDA data",
-        "loading_error": "Error loading EDA data",
-        "no_outlier_data": "No outlier data available",
-        "no_corr_data": "No correlation data available",
-        "total": "Total",
+        "correlation_target": "Correlation with Target",
+        "interpretation": "Interpretation",
+        "no_data": "No data loaded. Upload a CSV to begin.",
+        "loading_error": "Error processing file",
         "feature": "Feature",
         "correlation": "Correlation",
         "variable": "Variable",
-        "type": "Type",
         "count": "Count",
         "mean": "Mean",
         "std": "Standard Deviation",
         "min": "Minimum",
         "max": "Maximum",
-        "p25": "25%",
-        "p50": "50% (Median)",
-        "p75": "75%",
-        "skew": "Skewness",
-        "kurt": "Kurtosis",
-        "method": "Method",
-        "value": "Value",
-        "interpretation_text": "The California Housing dataset contains {rows} records and {cols} features. {outliers_iqr} outliers were detected by the IQR method and {outliers_zscore} by the Z-Score method. The strongest correlations with housing value are: {top_corr}.",
+        "loading_data": "Processing data...",
+        "target": "Target",
+        "samples": "Samples",
+        "numeric_cols": "Numeric Columns",
+        "interpretation_text": "The dataset contains {samples} samples and {features} features. The target variable is '{target}'.",
     },
 }
 
@@ -104,189 +91,133 @@ st.title(tr("title"))
 st.markdown(f"*{tr('subtitle')}*")
 st.markdown("---")
 
-try:
-    with st.spinner("Loading EDA data..."):
-        data = api_client.get_eda_results()
-except Exception as e:
-    st.error(f"{tr('loading_error')}: {e}")
+# ── Upload section ──
+if "uploaded_df" not in st.session_state:
+    st.session_state.uploaded_df = None
+if "target_col" not in st.session_state:
+    st.session_state.target_col = None
+
+uploaded_file = st.file_uploader(tr("upload_header"), type="csv", help=tr("upload_hint"))
+
+if uploaded_file is not None:
+    try:
+        df = pd.read_csv(uploaded_file)
+        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        if len(numeric_cols) < 2:
+            st.error("El dataset debe tener al menos 2 columnas numéricas.")
+            st.stop()
+        st.success(f"{tr('uploaded_file')}: {uploaded_file.name} ({df.shape[0]} rows, {df.shape[1]} cols)")
+
+        target = st.selectbox(tr("target_select"), numeric_cols, index=len(numeric_cols)-1)
+
+        if st.button(tr("start_eda"), type="primary", use_container_width=True):
+            st.session_state.uploaded_df = df
+            st.session_state.target_col = target
+            st.rerun()
+    except Exception as e:
+        st.error(f"{tr('loading_error')}: {e}")
+        st.stop()
+
+df = st.session_state.get("uploaded_df")
+target_col = st.session_state.get("target_col")
+
+if df is None:
+    st.info(tr("no_data"))
     st.stop()
 
-# ── Section 1: Dataset Info ─────────────────────────────────────
+# Ensure only numeric columns
+df_num = df.select_dtypes(include=[np.number])
+if target_col not in df_num.columns:
+    st.error(f"Target '{target_col}' no es numérica.")
+    st.stop()
+
+X = df_num.drop(columns=[target_col])
+y = df_num[target_col]
+
+# Store for other pages
+st.session_state.X_data = X
+st.session_state.y_data = y
+st.session_state.feature_names = X.columns.tolist()
+
+st.markdown("---")
+
+# ── 1. Dataset Info ──
 st.header(tr("dataset_info"))
-
 col1, col2, col3 = st.columns(3)
-shape = data.get("shape", {})
 with col1:
-    st.metric(tr("rows"), shape.get("rows", "N/A"))
+    st.metric(tr("samples"), f"{df.shape[0]:,}")
 with col2:
-    st.metric(tr("cols"), shape.get("columns", "N/A"))
+    st.metric(tr("numeric_cols"), len(X.columns))
 with col3:
-    st.metric(tr("total") + " " + tr("columns"), shape.get("columns", "N/A"))
+    st.metric(tr("target"), target_col)
 
-col_info = data.get("columns_info", data.get("dtypes", {}))
-if isinstance(col_info, dict):
-    df_cols = pd.DataFrame([
-        {"Variable": k, tr("type"): v} for k, v in col_info.items()
-    ])
-    st.dataframe(df_cols, use_container_width=True)
+st.dataframe(pd.DataFrame({
+    tr("variable"): df_num.columns,
+    tr("count"): [dt.name for dt in df_num.dtypes],
+}).set_index(tr("variable")), use_container_width=True)
 
-# ── Section 2: Descriptive Statistics ───────────────────────────
+# ── 2. Descriptive Stats ──
 st.header(tr("descriptive_stats"))
-desc = data.get("descriptive_stats", data.get("statistics", {}))
-if isinstance(desc, dict):
-    df_desc = pd.DataFrame(desc).T if not isinstance(desc, list) else pd.DataFrame(desc)
-    st.dataframe(df_desc.style.format("{:.4f}"), use_container_width=True)
-elif isinstance(desc, list):
-    st.dataframe(pd.DataFrame(desc).style.format("{:.4f}"), use_container_width=True)
+desc = df_num.describe().T
+desc["skew"] = df_num.skew()
+desc["kurtosis"] = df_num.kurtosis()
+st.dataframe(desc.style.format("{:.4f}"), use_container_width=True)
 
-# ── Section 3: Missing Values and Duplicates ────────────────────
+# ── 3. Missing & Duplicates ──
 st.header(tr("missing_duplicates"))
-missing = data.get("missing_values", data.get("missing", {}))
-duplicates = data.get("duplicates", data.get("duplicated", {}))
-
 c1, c2 = st.columns(2)
 with c1:
-    if isinstance(missing, dict):
-        df_miss = pd.DataFrame([{tr("variable"): k, tr("count"): v} for k, v in missing.items()])
-        st.dataframe(df_miss, use_container_width=True)
-    elif isinstance(missing, (int, float)):
-        st.metric(tr("missing"), missing)
+    missing_s = df.isnull().sum()
+    if missing_s.sum() > 0:
+        st.dataframe(pd.DataFrame({tr("variable"): missing_s.index, tr("count"): missing_s.values}), use_container_width=True)
     else:
-        st.metric(tr("missing"), str(missing))
-
+        st.metric(tr("missing"), 0)
 with c2:
-    if isinstance(duplicates, dict):
-        df_dup = pd.DataFrame([{tr("variable"): k, tr("count"): v} for k, v in duplicates.items()])
-        st.dataframe(df_dup, use_container_width=True)
-    elif isinstance(duplicates, (int, float)):
-        st.metric(tr("duplicates"), duplicates)
-    else:
-        st.metric(tr("duplicates"), str(duplicates))
+    dup_count = df.duplicated().sum()
+    st.metric(tr("duplicates"), dup_count)
 
-# ── Section 4: Outliers ─────────────────────────────────────────
+# ── 4. Outliers ──
 st.header(tr("outliers"))
-outliers_data = data.get("outliers", data.get("outlier_detection", {}))
-if outliers_data:
-    iqr = outliers_data.get("iqr", outliers_data.get("IQR", {}))
-    zscore = outliers_data.get("zscore", outliers_data.get("z_score", {}))
+outlier_counts = {}
+for col in X.columns:
+    Q1 = df_num[col].quantile(0.25)
+    Q3 = df_num[col].quantile(0.75)
+    IQR = Q3 - Q1
+    outliers = ((df_num[col] < (Q1 - 1.5*IQR)) | (df_num[col] > (Q3 + 1.5*IQR))).sum()
+    outlier_counts[col] = int(outliers)
 
-    if isinstance(iqr, dict) and isinstance(zscore, dict):
-        all_vars = sorted(set(list(iqr.keys()) + list(zscore.keys())))
-        df_out = pd.DataFrame({
-            tr("variable"): all_vars,
-            tr("outliers_iqr"): [iqr.get(v, 0) for v in all_vars],
-            tr("outliers_zscore"): [zscore.get(v, 0) for v in all_vars],
-        })
-        fig_out = px.bar(
-            df_out,
-            x=tr("variable"),
-            y=[tr("outliers_iqr"), tr("outliers_zscore")],
-            barmode="group",
-            title=tr("outliers"),
-        )
-        st.plotly_chart(fig_out, use_container_width=True)
-    elif isinstance(iqr, (int, float)) or isinstance(zscore, (int, float)):
-        df_out = pd.DataFrame({
-            tr("method"): [tr("outliers_iqr"), tr("outliers_zscore")],
-            tr("value"): [iqr if isinstance(iqr, (int, float)) else 0, zscore if isinstance(zscore, (int, float)) else 0],
-        })
-        fig_out = px.bar(df_out, x=tr("method"), y=tr("value"), title=tr("outliers"), color=tr("method"))
-        st.plotly_chart(fig_out, use_container_width=True)
-    else:
-        st.info(tr("no_outlier_data"))
-else:
-    st.info(tr("no_outlier_data"))
+df_out = pd.DataFrame({tr("feature"): list(outlier_counts.keys()), tr("count"): list(outlier_counts.values())})
+fig_out = px.bar(df_out, x=tr("feature"), y=tr("count"), title=tr("outliers"), color=tr("count"),
+                 color_continuous_scale="reds")
+st.plotly_chart(fig_out, use_container_width=True)
 
-# ── Section 5: Correlation Matrix ───────────────────────────────
+# ── 5. Correlation Matrix ──
 st.header(tr("correlation_matrix"))
-corr_data = data.get("correlation_matrix", data.get("correlation", data.get("corr_matrix", {})))
-if corr_data:
-    if isinstance(corr_data, dict):
-        df_corr = pd.DataFrame(corr_data).astype(float)
-    elif isinstance(corr_data, list):
-        df_corr = pd.DataFrame(corr_data).astype(float)
-    else:
-        df_corr = None
+corr_matrix = df_num.corr()
+fig_heat = go.Figure(data=go.Heatmap(
+    z=corr_matrix.values,
+    x=corr_matrix.columns.tolist(),
+    y=corr_matrix.index.tolist(),
+    colorscale="RdBu_r", zmin=-1, zmax=1,
+    text=np.round(corr_matrix.values, 2), texttemplate="%{text}",
+))
+fig_heat.update_layout(height=600, title=tr("correlation_matrix"))
+st.plotly_chart(fig_heat, use_container_width=True)
 
-    if df_corr is not None and not df_corr.empty:
-        fig_heat = go.Figure(data=go.Heatmap(
-            z=df_corr.values,
-            x=df_corr.columns.tolist(),
-            y=df_corr.index.tolist(),
-            colorscale="RdBu_r",
-            zmin=-1, zmax=1,
-            text=np.round(df_corr.values, 2),
-            texttemplate="%{text}",
-        ))
-        fig_heat.update_layout(title=tr("correlation_matrix"), height=600)
-        st.plotly_chart(fig_heat, use_container_width=True)
-    else:
-        st.info(tr("no_corr_data"))
-else:
-    st.info(tr("no_corr_data"))
-
-# ── Section 6: Correlation with Target ──────────────────────────
+# ── 6. Correlation with Target ──
 st.header(tr("correlation_target"))
-target_corr = data.get("correlation_with_target", data.get("target_correlation", data.get("corr_with_target", {})))
-if not target_corr and df_corr is not None and not df_corr.empty:
-    target_col = "MedHouseVal" if "MedHouseVal" in df_corr.columns else df_corr.columns[-1]
-    if target_col in df_corr.columns:
-        target_corr = df_corr[target_col].drop(target_col).to_dict()
+target_corr = corr_matrix[target_col].drop(target_col).sort_values(key=abs, ascending=True)
+df_tc = pd.DataFrame({tr("feature"): target_corr.index, tr("correlation"): target_corr.values})
+fig_tc = px.bar(df_tc, x=tr("correlation"), y=tr("feature"), orientation="h",
+                title=tr("correlation_target"), color=tr("correlation"),
+                color_continuous_scale="RdBu_r", range_color=[-1, 1])
+fig_tc.update_layout(height=400)
+st.plotly_chart(fig_tc, use_container_width=True)
 
-if target_corr:
-    if isinstance(target_corr, dict):
-        df_tc = pd.DataFrame({
-            tr("feature"): list(target_corr.keys()),
-            tr("correlation"): list(target_corr.values()),
-        }).sort_values(tr("correlation"), key=abs, ascending=True)
-        color_col = tr("correlation")
-        fig_tc = px.bar(
-            df_tc,
-            x=tr("correlation"),
-            y=tr("feature"),
-            orientation="h",
-            title=tr("correlation_target"),
-            color=color_col,
-            color_continuous_scale="RdBu_r",
-            range_color=[-1, 1],
-        )
-        fig_tc.update_layout(height=400)
-        st.plotly_chart(fig_tc, use_container_width=True)
-    elif isinstance(target_corr, list):
-        df_tc = pd.DataFrame(target_corr)
-        if not df_tc.empty:
-            st.dataframe(df_tc.style.format("{:.4f}"), use_container_width=True)
-
-# ── Section 7: Interpretation ───────────────────────────────────
+# ── 7. Interpretation ──
 st.header(tr("interpretation"))
-rows_val = shape.get("rows", "N/A")
-cols_val = shape.get("columns", "N/A")
-top_corr_text = tr("no_corr_data")
-if target_corr:
-    if isinstance(target_corr, dict):
-        sorted_corr = sorted(target_corr.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
-        top_corr_text = ", ".join([f"{k}: {v:.3f}" for k, v in sorted_corr])
-    elif isinstance(target_corr, list) and len(target_corr) > 0:
-        top_corr_text = str(target_corr[:3])
-
-iqr_total = 0
-zscore_total = 0
-if outliers_data:
-    iq = outliers_data.get("iqr", outliers_data.get("IQR", {}))
-    zs = outliers_data.get("zscore", outliers_data.get("z_score", {}))
-    if isinstance(iq, dict):
-        iqr_total = sum(v for v in iq.values() if isinstance(v, (int, float)))
-    elif isinstance(iq, (int, float)):
-        iqr_total = iq
-    if isinstance(zs, dict):
-        zscore_total = sum(v for v in zs.values() if isinstance(v, (int, float)))
-    elif isinstance(zs, (int, float)):
-        zscore_total = zs
-
-st.info(
-    tr("interpretation_text").format(
-        rows=rows_val, cols=cols_val,
-        outliers_iqr=iqr_total, outliers_zscore=zscore_total,
-        top_corr=top_corr_text,
-    )
-)
+st.info(tr("interpretation_text").format(
+    samples=f"{df.shape[0]:,}",
+    features=len(X.columns),
+    target=target_col,
+))

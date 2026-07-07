@@ -70,17 +70,27 @@ lang = st.session_state.language
 st.title(tr("title"))
 st.markdown(f"*{tr('subtitle')}*")
 
+# ── Check if we have uploaded data ──
+X_data = st.session_state.get("X_data")
+y_data = st.session_state.get("y_data")
+has_uploaded = X_data is not None and y_data is not None
+
 # ── Retrain button ──
 col_btn, col_info = st.columns([1, 3])
 with col_btn:
-    retrain_clicked = st.button("🔄 Reentrenar modelos", type="primary", use_container_width=True)
+    retrain_clicked = st.button("🔄 Entrenar modelos con datos cargados", type="primary", use_container_width=True)
 with col_info:
     if "last_train_time" in st.session_state:
         st.caption(f"Último entrenamiento: {st.session_state.last_train_time}")
+    if not has_uploaded:
+        st.caption("Usando datos precargados (California Housing). Sube un dataset en EDA para entrenar con datos propios.")
 
 if retrain_clicked:
+    if not has_uploaded:
+        st.error("Primero sube un dataset en la página EDA.")
+        st.stop()
     import datetime
-    from trainer import train_all
+    from trainer import train_on_data
     st.markdown("---")
     status_placeholder = st.empty()
     progress_bar = st.progress(0, text="Iniciando...")
@@ -92,8 +102,12 @@ if retrain_clicked:
         status_placeholder.info(msg)
 
     try:
-        results, _ = train_all(progress_callback=on_progress, status_callback=on_status)
+        results, predictions_store, y_test_list, scaler = train_on_data(
+            X_data, y_data, progress_callback=on_progress, status_callback=on_status
+        )
         st.session_state.trained_results = results
+        st.session_state.predictions_store = predictions_store
+        st.session_state.y_test_data = y_test_list
         st.session_state.last_train_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         progress_bar.progress(1.0, text="¡Entrenamiento completado!")
         status_placeholder.success("Todos los modelos entrenados exitosamente.")
@@ -105,15 +119,18 @@ if retrain_clicked:
 
 st.markdown("---")
 
-try:
-    with st.spinner("Loading training metrics..."):
-        data = api_client.get_training_metrics()
-except Exception as e:
-    st.error(f"{tr('loading_error')}: {e}")
-    st.stop()
-
+# Load data: try trained results first, then API
 trained = st.session_state.get("trained_results")
-models = trained if trained else data.get("metrics", data.get("models", data.get("results", [])))
+if trained:
+    models = trained
+else:
+    try:
+        with st.spinner("Cargando métricas precargadas..."):
+            data = api_client.get_training_metrics()
+        models = data.get("metrics", data.get("models", data.get("results", [])))
+    except Exception:
+        st.error(f"{tr('loading_error')}")
+        st.stop()
 
 # ── Section 1: Comparison Table ────────────────────────────────
 st.header(tr("comparison_table"))
@@ -177,8 +194,8 @@ if models:
 
 # ── Section 3: Best Model Details ──────────────────────────────
 st.header(tr("best_model"))
-best_model = data.get("best_model", data.get("best", {}))
-if not best_model and models:
+best_model = {}
+if models:
     df_temp = pd.DataFrame(models)
     r2_c = next((c for c in ["R2", "R²", "r2"] if c in df_temp.columns), None)
     if r2_c:
@@ -211,35 +228,22 @@ if best_model:
         with st.expander(tr("best_model_details")):
             st.text(params)
 
-# ── Section 4: Training History ─────────────────────────────────
-st.header(tr("training_history"))
-history = data.get("history", data.get("training_history", data.get("loss_curves", [])))
-if history:
-    if isinstance(history, list) and len(history) > 0:
-        df_hist = pd.DataFrame(history)
-        if "epoch" in df_hist.columns or "loss" in df_hist.columns:
-            x_col = "epoch" if "epoch" in df_hist.columns else df_hist.columns[0]
-            y_cols = [c for c in df_hist.columns if c != x_col]
-            fig_hist = go.Figure()
-            for yc in y_cols:
-                fig_hist.add_trace(go.Scatter(
-                    x=df_hist[x_col], y=df_hist[yc],
-                    mode="lines+markers", name=yc,
-                ))
-            fig_hist.update_layout(
-                title=tr("loss_curves"),
-                xaxis_title=tr("epoch"),
-                yaxis_title=tr("loss"),
-            )
-            st.plotly_chart(fig_hist, use_container_width=True)
-        else:
-            st.dataframe(df_hist, use_container_width=True)
-    elif isinstance(history, dict):
-        df_hist = pd.DataFrame(history)
-        if not df_hist.empty:
-            st.dataframe(df_hist, use_container_width=True)
-else:
-    st.info("No training history available.")
+# ── Section 4: Confusion Matrix & ROC (best model) ──────────────
+if best_model:
+    cm = best_model.get("confusion_matrix")
+    roc_auc = best_model.get("roc_auc")
+    if cm:
+        st.subheader("📊 Matriz de Confusión (cuartiles)")
+        labels = ["Q1", "Q2", "Q3", "Q4"]
+        fig_cm = go.Figure(data=go.Heatmap(
+            z=cm, x=labels, y=labels,
+            colorscale="Blues", text=[[f"{v}" for v in row] for row in cm],
+            texttemplate="%{text}",
+        ))
+        fig_cm.update_layout(height=400, xaxis_title="Predicho", yaxis_title="Real")
+        st.plotly_chart(fig_cm, use_container_width=True)
+    if roc_auc:
+        st.metric("AUC ROC", f"{roc_auc:.4f}")
 
 # ── Section 5: Interpretation ──────────────────────────────────
 st.header(tr("interpretation"))

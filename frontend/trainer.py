@@ -2,15 +2,16 @@ import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import time
-import json
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import (
+    mean_squared_error, mean_absolute_error, r2_score,
+    confusion_matrix, roc_curve, roc_auc_score,
+)
 
 MODEL_NAMES = [
     "MLP Baseline",
@@ -21,7 +22,6 @@ MODEL_NAMES = [
 ]
 
 def _build_model(name, input_dim):
-
     if name == "MLP Baseline":
         i = keras.Input(shape=(input_dim,))
         x = layers.Dense(64, activation="relu")(i)
@@ -85,13 +85,9 @@ def _build_model(name, input_dim):
     )
     return model
 
-def train_all(progress_callback=None, status_callback=None):
-    data = fetch_california_housing(as_frame=True)
-    df = data.frame
-    df.columns = ["MedInc","HouseAge","AveRooms","AveBedrms",
-                   "Population","AveOccup","Latitude","Longitude","MedHouseVal"]
-    X = df.drop("MedHouseVal", axis=1).values
-    y = df["MedHouseVal"].values
+def train_on_data(X, y, progress_callback=None, status_callback=None):
+    X = np.asarray(X, dtype=np.float32)
+    y = np.asarray(y, dtype=np.float32).ravel()
 
     X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
     X_train, X_val, y_train, y_val = train_test_split(
@@ -104,6 +100,7 @@ def train_all(progress_callback=None, status_callback=None):
     X_test_s = scaler.transform(X_test)
 
     results = []
+    predictions_store = {}
     total = len(MODEL_NAMES)
 
     for idx, name in enumerate(MODEL_NAMES):
@@ -139,6 +136,21 @@ def train_all(progress_callback=None, status_callback=None):
         mae = float(mean_absolute_error(y_test, y_pred))
         r2 = float(r2_score(y_test, y_pred))
 
+        predictions_store[name] = y_pred.tolist()
+
+        # Confusion matrix (quartile-based)
+        bins = np.percentile(y_test, [0, 25, 50, 75, 100])
+        bins[-1] += 1e-8
+        y_true_bin = np.digitize(y_test, bins[1:-1])
+        y_pred_bin = np.digitize(y_pred, bins[1:-1])
+        cm = confusion_matrix(y_true_bin, y_pred_bin, labels=[0, 1, 2, 3]).tolist()
+
+        # ROC (binary: above/below median)
+        median = float(np.median(y_test))
+        y_true_bin_roc = (y_test >= median).astype(int)
+        fpr, tpr, _ = roc_curve(y_true_bin_roc, y_pred)
+        auc = float(roc_auc_score(y_true_bin_roc, y_pred))
+
         results.append({
             "model_name": name,
             "model_type": "Hybrid" if name in ("CNN-LSTM", "Autoencoder-MLP") else "Classic",
@@ -148,6 +160,8 @@ def train_all(progress_callback=None, status_callback=None):
             "r2": round(r2, 4),
             "training_time_sec": round(elapsed, 2),
             "num_params": int(model.count_params()),
+            "confusion_matrix": cm,
+            "roc_auc": round(auc, 4),
         })
 
         if status_callback:
@@ -156,4 +170,4 @@ def train_all(progress_callback=None, status_callback=None):
             progress_callback((idx + 1) / total)
 
     results.sort(key=lambda r: r["r2"], reverse=True)
-    return results, scaler
+    return results, predictions_store, y_test.tolist(), scaler

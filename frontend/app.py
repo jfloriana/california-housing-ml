@@ -22,6 +22,18 @@ if "language" not in st.session_state:
     st.session_state.language = "es"
 if "page" not in st.session_state:
     st.session_state.page = "Login"
+if "X_data" not in st.session_state:
+    st.session_state.X_data = None
+if "y_data" not in st.session_state:
+    st.session_state.y_data = None
+if "feature_names" not in st.session_state:
+    st.session_state.feature_names = None
+if "trained_results" not in st.session_state:
+    st.session_state.trained_results = None
+if "predictions_store" not in st.session_state:
+    st.session_state.predictions_store = None
+if "y_test_data" not in st.session_state:
+    st.session_state.y_test_data = None
 
 # Translation dictionary
 LANG = {
