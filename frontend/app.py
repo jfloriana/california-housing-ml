@@ -9,70 +9,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Modern CSS ──────────────────────────────────────────────────
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-    .stApp {
-        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-        color: #e0e0e0;
-    }
-    .stMarkdown, .stText, p, li, h1, h2, h3, h4, h5, h6 { color: #e0e0e0 !important; }
-    h1 { font-weight: 700 !important; background: linear-gradient(90deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    h2, h3 { font-weight: 600 !important; color: #c0c0ff !important; }
-    .stButton>button {
-        background: linear-gradient(90deg, #667eea, #764ba2) !important;
-        color: white !important; border: none !important; border-radius: 8px !important;
-        font-weight: 500 !important; padding: 0.5rem 1.5rem !important;
-        transition: transform 0.2s, box-shadow 0.2s !important;
-    }
-    .stButton>button:hover {
-        transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    }
-    .stTextInput>div>div>input, .stNumberInput>div>div>input {
-        background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,255,255,0.15) !important;
-        border-radius: 8px !important; color: #e0e0e0 !important;
-    }
-    .stTextInput>div>div>input:focus, .stNumberInput>div>div>input:focus {
-        border-color: #667eea !important; box-shadow: 0 0 0 2px rgba(102,126,234,0.3) !important;
-    }
-    .stSelectbox>div>div>div { background: rgba(255,255,255,0.08) !important; border-radius: 8px !important; color: #e0e0e0 !important; }
-    .stSlider>div>div>div>div { background: #667eea !important; }
-    .st-bd { border-color: rgba(255,255,255,0.1) !important; }
-    .stDataFrame { background: rgba(255,255,255,0.05) !important; border-radius: 10px !important; overflow: hidden; }
-    .stDataFrame th { background: rgba(102,126,234,0.2) !important; color: #c0c0ff !important; font-weight: 600 !important; }
-    .stDataFrame td { color: #e0e0e0 !important; }
-    div[data-testid="stMetric"] {
-        background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 12px !important; padding: 16px !important; text-align: center;
-        backdrop-filter: blur(10px);
-    }
-    div[data-testid="stMetric"] label { color: #a0a0c0 !important; font-weight: 500 !important; }
-    div[data-testid="stMetric"] div { color: #e0e0ff !important; font-size: 1.8rem !important; font-weight: 700 !important; }
-    .stSidebar { background: rgba(15,12,41,0.95) !important; border-right: 1px solid rgba(255,255,255,0.08); }
-    .stSidebar .stMarkdown, .stSidebar p, .stSidebar h1, .stSidebar h2, .stSidebar h3 { color: #c0c0ff !important; }
-    .stSidebar .stRadio>div>label>div { color: #e0e0e0 !important; font-weight: 400; }
-    .stSidebar .stRadio>div>label>div:hover { color: #667eea !important; }
-    .st-bw { background: transparent !important; }
-    .stTabs [data-baseweb="tab-list"] { gap: 4px; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; }
-    .stTabs [data-baseweb="tab"] { border-radius: 8px !important; padding: 8px 20px !important; color: #a0a0c0 !important; }
-    .stTabs [aria-selected="true"] { background: linear-gradient(90deg, #667eea, #764ba2) !important; color: white !important; }
-    .st-expander { background: rgba(255,255,255,0.04) !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 12px !important; }
-    .st-info, .stAlert { background: rgba(102,126,234,0.15) !important; border: 1px solid rgba(102,126,234,0.3) !important; color: #c0c0ff !important; border-radius: 10px !important; }
-    .st-bq { border-left-color: #667eea !important; }
-    hr { border-color: rgba(255,255,255,0.08) !important; }
-    section[data-testid="stSidebar"] { width: 280px !important; }
-    .login-container { max-width: 420px; margin: 0 auto; padding: 2rem; }
-    .card {
-        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 16px; padding: 24px; backdrop-filter: blur(12px);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(102,126,234,0.2); }
-    .stPlotlyChart { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 8px; }
-</style>
-""", unsafe_allow_html=True)
+
 
 # Session state initialization
 if "authenticated" not in st.session_state:
@@ -142,12 +79,10 @@ def tr(key):
 
 # ── Login Page ──────────────────────────────────────────────────────
 def login_page():
+    st.title(tr("app_title"))
+    st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-        st.markdown(f"<h1 style='text-align:center;font-size:2.2rem;'>{tr('app_title')}</h1>", unsafe_allow_html=True)
-        st.markdown("<div class='card' style='margin-top:1.5rem;'>", unsafe_allow_html=True)
-        
         tab1, tab2 = st.tabs([tr("login"), tr("signup")])
         
         with tab1:
@@ -179,8 +114,6 @@ def login_page():
                         st.success("User created! Check your email for confirmation.")
                     except Exception as e:
                         st.error(f"{tr('error_auth')}: {str(e)}")
-        
-        st.markdown("</div></div>", unsafe_allow_html=True)
 
 # ── Main App (authenticated) ───────────────────────────────────────
 def main_app():

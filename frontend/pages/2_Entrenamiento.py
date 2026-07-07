@@ -86,16 +86,22 @@ if models:
     df_models = pd.DataFrame(models)
     metric_cols = [tr("model"), tr("mse"), tr("rmse"), tr("mae"), tr("r2"), tr("time"), tr("params")]
     col_map = {
-        "model": "model",
-        "name": "model",
+        "model_name": tr("model"),
+        "model": tr("model"),
+        "name": tr("model"),
+        "mse": tr("mse"),
         "MSE": tr("mse"),
+        "rmse": tr("rmse"),
         "RMSE": tr("rmse"),
+        "mae": tr("mae"),
         "MAE": tr("mae"),
+        "r2": tr("r2"),
         "R2": tr("r2"),
         "R²": tr("r2"),
-        "r2": tr("r2"),
+        "training_time_sec": tr("time"),
         "training_time": tr("time"),
         "time": tr("time"),
+        "num_params": tr("params"),
         "params": tr("params"),
         "parameters": tr("params"),
     }
