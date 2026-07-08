@@ -122,6 +122,15 @@ with col_yf:
         st.session_state.show_yahoo = not st.session_state.get("show_yahoo", False)
         st.rerun()
 
+st.markdown("""
+<style>
+    div[data-testid="column"]:nth-of-type(3) button {
+        background-color: #00a86b !important;
+        color: white !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 if st.session_state.get("show_yahoo"):
     st.markdown("---")
     st.subheader("📈 Yahoo Finance")
@@ -138,12 +147,13 @@ if st.session_state.get("show_yahoo"):
         try:
             import yfinance as yf
             st.info(f"Descargando {ticker}...")
-            data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+            ticker_obj = yf.Ticker(ticker)
+            data = ticker_obj.history(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"))
             if data.empty:
-                st.error(f"No hay datos para {ticker} en el rango seleccionado.")
+                st.error(f"No hay datos para {ticker} en el rango seleccionado. Prueba con otro ticker o rango de fechas.")
                 st.stop()
             df_yf = data.reset_index()
-            df_yf.columns = [c[0] if isinstance(c, tuple) else c for c in df_yf.columns]
+            df_yf.columns = [str(c).replace(" ", "_") for c in df_yf.columns]
             # Compute technical indicators
             close_sma_10 = df_yf["Close"].rolling(10).mean()
             close_sma_50 = df_yf["Close"].rolling(50).mean()
